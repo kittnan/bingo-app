@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0710">
+<meta name="description" content="เครื่องเรียกเลขบิงโก 75 ลูกธีมคาสิโน ใช้คู่กับการ์ดกระดาษ">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="บิงโก">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>บิงโกคลาสสิก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Mitr:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: casino stage — marquee-lit stage with spinning cage + reveal ball, gold controls, called-number board below. Single committed dark look. */
+:root {
+  --bg: #0c0710;
+  --felt: #0f3d2b;
+  --felt-deep: #072117;
+  --panel: #1a1020;
+  --line: #3a2740;
+  --ink: #f6eedd;
+  --muted: #b9a9a0;
+  --gold: #f4c445;
+  --gold-deep: #b9861a;
+  --red: #d01836;
+  --red-deep: #7c0b1f;
+  --b: #2f86f6; --i: #ef3b4c; --n: #c9ccd6; --g: #22b866; --o: #ff9417;
+  --font-shade: "Bungee Shade", "Bungee", "Arial Black", Impact, sans-serif;
+  --font-display: "Bungee", "Arial Black", Impact, sans-serif;
+  --font-body: "Mitr", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body { color: var(--ink); font-family: var(--font-body); font-weight: 300; font-size: 15px; line-height: 1.55;
+  background: radial-gradient(1200px 600px at 50% -10%, #3a0f2a 0%, transparent 60%), var(--bg); min-height: 100%; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 48px; display: flex; flex-direction: column; gap: 18px; }
+
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+h1 { margin: 0; font-family: var(--font-shade); font-weight: 400; font-size: clamp(34px, 7vw, 56px); line-height: 1; color: var(--gold);
+  text-shadow: 0 0 18px rgba(244,196,69,.55), 0 0 2px #fff; letter-spacing: .03em; }
+.sub { margin: 0; color: var(--muted); font-size: 14px; }
+.head-tools { display: flex; gap: 8px; }
+
+/* Stage */
+.stage { position: relative; border-radius: 22px; padding: 22px 18px;
+  background: radial-gradient(ellipse at 50% 40%, #16573d 0%, var(--felt) 45%, var(--felt-deep) 100%);
+  border: 6px solid var(--gold-deep);
+  box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 60px rgba(0,0,0,.6), 0 18px 50px rgba(0,0,0,.6), 0 0 40px rgba(244,196,69,.15); overflow: hidden; }
+.stage.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake { 10%,90%{transform:translate(-2px,1px)} 20%,80%{transform:translate(4px,-2px)} 30%,50%,70%{transform:translate(-7px,3px)} 40%,60%{transform:translate(7px,-3px)} }
+
+.bulbs { position: absolute; left: 10px; right: 10px; height: 14px; pointer-events: none; }
+.bulbs.top { top: 6px; } .bulbs.bottom { bottom: 6px; }
+.bulbs::before, .bulbs::after { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle, #fff6d0 0 2px, var(--gold) 3px 5px, transparent 6px) 0 50% / 24px 14px repeat-x;
+  filter: drop-shadow(0 0 4px var(--gold)); animation: blink 1.2s steps(1) infinite; }
+.bulbs::after { background-position: 12px 50%; animation-delay: -.6s; }
+.stage.spinning .bulbs::before, .stage.spinning .bulbs::after { animation-duration: .16s; }
+.stage.spinning .bulbs::after { animation-delay: -.08s; }
+@keyframes blink { 0% { opacity: 1 } 50% { opacity: .15 } }
+
+.stage-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: center; padding-block: 10px; }
+@media (max-width: 720px) { .stage-in { grid-template-columns: minmax(0, 1fr); } }
+
+.cage-wrap { position: relative; display: grid; justify-items: center; gap: 6px; }
+#cage { width: 100%; max-width: 340px; aspect-ratio: 1; display: block; }
+.left { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.left b { color: var(--gold); font-weight: 600; }
+
+.result { position: relative; display: grid; justify-items: center; gap: 14px; text-align: center; min-width: 0; }
+.halo { position: relative; width: min(250px, 66vw); aspect-ratio: 1; display: grid; place-items: center; }
+.rays { position: absolute; inset: -22%; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(244,196,69,.38) 0deg 9deg, transparent 9deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%);
+  animation: spin 18s linear infinite; opacity: .55; }
+.stage.spinning .rays { animation-duration: 1s; opacity: 1; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ring { position: absolute; inset: 0; border-radius: 50%; border: 6px solid var(--gold); opacity: 0; pointer-events: none; }
+.ring.go { animation: ring .9s ease-out; }
+@keyframes ring { from { transform: scale(.6); opacity: 1; } to { transform: scale(2.1); opacity: 0; } }
+
+.ball { --c: #5b5560; position: relative; width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.7), rgba(255,255,255,0) 36%), radial-gradient(circle at 60% 70%, rgba(0,0,0,0) 40%, rgba(0,0,0,.45) 100%), var(--c);
+  box-shadow: 0 16px 34px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb, var(--c) 55%, transparent); transition: background-color .08s; }
+.ball .face { width: 60%; height: 60%; border-radius: 50%; background: #fbf8f1; display: grid; place-items: center; align-content: center; color: #1a1020;
+  box-shadow: inset 0 -6px 12px rgba(0,0,0,.18); }
+.ball .l { font-family: var(--font-display); font-size: clamp(22px, 5vw, 32px); line-height: 1; color: var(--c); }
+.ball .n { font-family: var(--font-display); font-size: clamp(46px, 11vw, 68px); line-height: 1.02; font-variant-numeric: tabular-nums; }
+.ball.idle .n { color: #8d8492; }
+.stage.spinning .ball { animation: wobble .18s linear infinite; }
+@keyframes wobble { 0%{transform:rotate(-4deg) scale(.97)} 50%{transform:rotate(4deg) scale(1.02)} 100%{transform:rotate(-4deg) scale(.97)} }
+.ball.reveal { animation: reveal .8s cubic-bezier(.18,1.7,.4,1); }
+@keyframes reveal { 0% { transform: scale(.2) rotate(-540deg); } 70% { transform: scale(1.18) rotate(8deg); } 100% { transform: none; } }
+
+.callout { font-family: var(--font-display); font-size: clamp(22px, 5vw, 30px); color: var(--gold); line-height: 1.1; min-height: 1.2em; text-shadow: 0 0 14px rgba(244,196,69,.5); }
+.callout small { display: block; font-family: var(--font-body); font-size: 14px; color: var(--muted); text-shadow: none; font-weight: 300; margin-top: 4px; }
+
+/* Spin button */
+.spin-row { display: flex; justify-content: center; margin-top: 4px; }
+.spin { position: relative; width: 132px; height: 132px; border-radius: 50%; border: 0; cursor: pointer; color: #fff;
+  font-family: var(--font-display); font-size: 26px; letter-spacing: .03em;
+  background: radial-gradient(circle at 35% 30%, #ff5a6f 0%, var(--red) 45%, var(--red-deep) 100%);
+  box-shadow: 0 0 0 6px var(--gold), 0 0 0 10px var(--gold-deep), 0 10px 0 10px #4a0412, 0 18px 30px 10px rgba(0,0,0,.5), 0 0 40px 14px rgba(208,24,54,.45);
+  transition: transform .08s, box-shadow .08s; animation: throb 1.6s ease-in-out infinite; }
+.spin span { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; letter-spacing: 0; opacity: .85; }
+.spin:active { transform: translateY(6px); box-shadow: 0 0 0 6px var(--gold), 0 0 0 10px var(--gold-deep), 0 4px 0 10px #4a0412, 0 8px 20px 10px rgba(0,0,0,.5); }
+.spin:disabled { filter: grayscale(.6) brightness(.7); cursor: not-allowed; animation: none; }
+@keyframes throb { 50% { box-shadow: 0 0 0 6px var(--gold), 0 0 0 10px var(--gold-deep), 0 10px 0 10px #4a0412, 0 18px 30px 10px rgba(0,0,0,.5), 0 0 70px 22px rgba(208,24,54,.7); } }
+
+/* Panels & controls */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+.label { margin: 0 0 10px; font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button.btn { font-family: var(--font-body); font-size: 15px; font-weight: 500; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+  border: 1.5px solid var(--gold-deep); background: transparent; color: var(--ink); transition: background .15s, color .15s; }
+button.btn:hover { background: rgba(244,196,69,.12); }
+button.btn[aria-pressed="true"] { background: var(--gold); color: #1a1020; border-color: var(--gold); }
+button.btn.warn { background: var(--red); border-color: var(--red); color: #fff; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 14px; color: var(--muted); align-items: center; }
+.opts label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.opts input { accent-color: var(--gold); }
+.opts select { font-family: var(--font-body); font-size: 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 4px 6px; }
+
+.recent { display: flex; gap: 8px; flex-wrap: wrap; min-height: 40px; align-items: center; }
+.mini { --c: #555; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-size: 13px; color: #fff;
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), transparent 40%), var(--c); box-shadow: 0 3px 8px rgba(0,0,0,.4); font-variant-numeric: tabular-nums; }
+.mini small { font-size: 9px; display: block; line-height: 1; text-align: center; }
+.empty-note { color: var(--muted); font-size: 14px; }
+
+.board-wrap { overflow-x: auto; }
+.board { display: grid; grid-template-columns: 34px repeat(15, minmax(0, 1fr)); gap: 4px; min-width: 0; }
+.board .rl { font-family: var(--font-display); font-size: 18px; display: grid; place-items: center; text-shadow: 0 0 10px currentColor; }
+.board .bn { aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-variant-numeric: tabular-nums;
+  color: #6f6474; background: #120b16; border: 1px solid #2a1d2f; font-weight: 400; transition: background .3s, color .3s, box-shadow .3s; }
+.board .bn.on { background: var(--c); color: #fff; font-weight: 600; border-color: transparent; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent); }
+.board .bn.last { animation: lastpulse 1s ease-in-out infinite; }
+@keyframes lastpulse { 50% { box-shadow: 0 0 0 3px #fff, 0 0 18px 4px var(--c); } }
+@media (max-width: 480px) { .board { grid-template-columns: 22px repeat(15, minmax(0, 1fr)); gap: 2px; } .board .bn { font-size: 9px; } .board .rl { font-size: 14px; } }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 720px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+kbd { font-family: var(--font-display); font-size: 11px; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; color: var(--ink); }
+
+/* Fullscreen: the stage fills the first screen; settings and board scroll below */
+.fs-exit { display: none; position: absolute; top: 26px; right: 26px; z-index: 2; font-size: 13px; padding: 6px 12px; background: rgba(12,7,16,.55); }
+.fs .fs-exit { display: inline-block; }
+.fs .wrap { max-width: none; padding-top: 0; }
+.fs .wrap > :not(.stage) { width: 100%; max-width: 1040px; margin-inline: auto; }
+.fs .stage { order: -1; min-height: 100vh; margin-inline: -16px; border-radius: 0; border-width: 8px; display: flex; flex-direction: column; justify-content: center; padding: 34px 3vw; }
+.fs .stage-in { gap: 3vw; }
+.fs #cage { max-width: min(600px, 74vh); }
+.fs .halo { width: min(440px, 50vh); }
+.fs .ball .l { font-size: min(6vh, 54px); }
+.fs .ball .n { font-size: min(15vh, 140px); }
+.fs .callout { font-size: min(6vh, 54px); }
+.fs .callout small { font-size: min(2.4vh, 20px); }
+.fs .left { font-size: 16px; }
+.fs .spin { width: min(150px, 17vh); height: min(150px, 17vh); font-size: min(3.4vh, 30px); }
+@media (max-aspect-ratio: 1/1) { .fs .halo { width: min(440px, 34vh); } .fs #cage { max-width: min(600px, 34vh); } }
+
+/* Last-5 strip on the stage */
+.last5 { display: grid; justify-items: center; gap: 6px; width: 100%; }
+.last5-label { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+.last5-row { display: flex; gap: clamp(6px, 1.4vw, 12px); justify-content: center; min-height: 56px; align-items: center; }
+.lb { --c: #555; --s: 54px; width: var(--s); height: var(--s); border-radius: 50%; display: grid; place-items: center; position: relative;
+  background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.65), transparent 38%), radial-gradient(circle at 60% 70%, transparent 40%, rgba(0,0,0,.4) 100%), var(--c);
+  box-shadow: 0 6px 14px rgba(0,0,0,.45), 0 0 14px color-mix(in srgb, var(--c) 45%, transparent); }
+.lb .f { width: 66%; height: 66%; border-radius: 50%; background: #fbf8f1; color: #1a1020; display: grid; place-items: center; align-content: center; line-height: 1; }
+.lb .f small { font-family: var(--font-display); font-size: calc(var(--s) * .16); color: var(--c); }
+.lb .f b { font-family: var(--font-display); font-weight: 400; font-size: calc(var(--s) * .3); font-variant-numeric: tabular-nums; }
+.lb:nth-child(n+2) { opacity: .88; } .lb:nth-child(n+4) { opacity: .72; }
+.lb.in { animation: lbIn .6s cubic-bezier(.2,1.5,.4,1); }
+@keyframes lbIn { from { transform: translateX(-30px) scale(.4); opacity: 0; } }
+.lb-empty { width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgba(244,196,69,.3); }
+.fs .lb, .fs .lb-empty { --s: min(84px, 9vh); width: min(84px, 9vh); height: min(84px, 9vh); }
+.fs .last5-label { font-size: 15px; }
+@media (max-width: 460px) { .lb, .lb-empty { --s: 46px; width: 46px; height: 46px; } }
+
+#flash { position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: 0;
+  background: radial-gradient(circle at var(--fx, 50%) var(--fy, 40%), rgba(255,240,180,.95), rgba(244,196,69,.4) 30%, transparent 65%); }
+#flash.go { animation: flash .7s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>BINGO</h1>
+      <p class="sub">เครื่องเรียกเลขบิงโก 75 ลูก · ใช้คู่กับการ์ดกระดาษ</p>
+    </div>
+    <div class="head-tools">
+      <button class="btn" id="fsBtn">เต็มจอ</button>
+    </div>
+  </header>
+
+  <section class="stage" id="stage" aria-label="เวทีสุ่มลูกบอล">
+    <div class="bulbs top"></div>
+    <button class="btn fs-exit" id="fsExit">ออกจากเต็มจอ (Esc)</button>
+    <div class="stage-in">
+      <div class="cage-wrap">
+        <canvas id="cage" width="340" height="340" aria-hidden="true"></canvas>
+        <div class="left" id="left">เหลือในโถ <b>75</b> ลูก</div>
+        <div class="last5">
+          <div class="last5-label">5 ลูกก่อนหน้า</div>
+          <div class="last5-row" id="last5"></div>
+        </div>
+      </div>
+      <div class="result">
+        <div class="halo">
+          <div class="rays"></div>
+          <div class="ring" id="ring"></div>
+          <div class="ball idle" id="ball"><div class="face"><span class="l" id="ballL">&nbsp;</span><span class="n" id="ballN">?</span></div></div>
+        </div>
+        <div class="callout" id="callout" aria-live="polite">พร้อมแล้ว!<small>กดปุ่มหมุนเพื่อสุ่มลูกแรก</small></div>
+        <div class="spin-row"><button class="spin" id="spinBtn">หมุน!<span>Space</span></button></div>
+      </div>
+    </div>
+    <div class="bulbs bottom"></div>
+  </section>
+
+  <div class="split">
+    <section class="panel">
+      <p class="label">ควบคุม</p>
+      <div class="controls">
+        <button class="btn" id="autoBtn" aria-pressed="false">หมุนอัตโนมัติ</button>
+        <button class="btn" id="newBtn">เริ่มเกมใหม่</button>
+      </div>
+      <div class="opts">
+        <label for="pause">พักระหว่างลูก
+          <select id="pause">
+            <option value="3000">3 วิ</option>
+            <option value="5000" selected>5 วิ</option>
+            <option value="8000">8 วิ</option>
+            <option value="12000">12 วิ</option>
+          </select>
+        </label>
+        <label for="sound"><input type="checkbox" id="sound" checked> เสียงเอฟเฟกต์</label>
+        <label for="speak"><input type="checkbox" id="speak"> อ่านเลขออกเสียง</label>
+        <label for="quick"><input type="checkbox" id="quick"> หมุนแบบเร็ว</label>
+      </div>
+      <p class="hint">กด <kbd>Space</kbd> เพื่อหมุนได้ทุกเมื่อ</p>
+    </section>
+
+    <section class="panel">
+      <p class="label" id="recentLabel">ลูกก่อนหน้า</p>
+      <div class="recent" id="recent"><span class="empty-note">ยังไม่มี</span></div>
+      <p class="hint" id="count">เรียกไปแล้ว 0 / 75 ลูก</p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <p class="label">กระดานเลขที่ถูกเรียก (ใช้ตรวจการ์ดคนที่ร้องบิงโก)</p>
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+  </section>
+</div>
+
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+
+<script>
+(() => {
+  const LETTERS = ["B", "I", "N", "G", "O"];
+  const LETTERS_TH = ["บี", "ไอ", "เอ็น", "จี", "โอ"];
+  const CSS = getComputedStyle(document.documentElement);
+  const HEX = ["--b", "--i", "--n", "--g", "--o"].map(v => CSS.getPropertyValue(v).trim());
+  const colOf = n => Math.floor((n - 1) / 15);
+  const $ = id => document.getElementById(id);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Fair random integer 0..n-1 from the browser's cryptographic RNG (rejection sampling = no modulo bias)
+  const rndInt = n => {
+    const buf = new Uint32Array(1), lim = Math.floor(4294967296 / n) * n;
+    let x;
+    do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= lim);
+    return x % n;
+  };
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rndInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const freshGame = () => ({ deck: Array.from({ length: 75 }, (_, i) => i + 1), called: [], id: Date.now() + "-" + rndInt(1e9) });
+
+  let S = null;            // { deck: [], called: [] }
+  let busy = false, autoOn = false, autoTimer = null;
+
+  /* ---------- Sound (Web Audio, starts after first click) ---------- */
+  let ac = null;
+  function audio() { if (!$("sound").checked) return null; try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac; } catch (e) { return null; } }
+  function tone(freq, dur, type, vol, when) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + (when || 0);
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || "square"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol || .06, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+  }
+  const tick = () => tone(700 + Math.random() * 700, .04, "square", .035);
+  function fanfare() {
+    const a = audio(); if (!a) return;
+    tone(70, .5, "sine", .35);
+    [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .35, "triangle", .12, i * .07));
+    [1047, 1319, 1568].forEach(f => tone(f, .9, "triangle", .07, .4));
+  }
+  function speak(n) {
+    if (!$("speak").checked) return;
+    try { const u = new SpeechSynthesisUtterance(LETTERS_TH[colOf(n)] + " " + n); u.lang = "th-TH"; u.rate = .9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {}
+  }
+
+  /* ---------- Cage (canvas physics) ---------- */
+  const cv = $("cage"), cx = cv.getContext("2d");
+  let SZ = 340, R, BR, balls = [], theta = 0, w = .5, wTarget = .5;
+  function sizeCage() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    SZ = cv.clientWidth || 340;
+    cv.width = SZ * dpr; cv.height = SZ * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    R = SZ * .40; BR = SZ * .036;
+  }
+  function fillCage(count, nums) {
+    balls = [];
+    const pool = shuffle(nums.slice());
+    for (let k = 0; k < count; k++) {
+      const a = Math.random() * Math.PI * 2, d = Math.random() * R * .6;
+      balls.push({ x: Math.cos(a) * d, y: R * .3 + Math.sin(a) * d * .4, vx: 0, vy: 0, n: pool[k % pool.length] });
+    }
+  }
+  function syncCage() {
+    const target = Math.min(S.deck.length, 36);
+    if (!balls.length && target) { fillCage(target, S.deck); return; }
+    while (balls.length > target) balls.pop();
+    while (balls.length < target) balls.push({ x: (Math.random() - .5) * R, y: R * .5, vx: 0, vy: 0, n: S.deck[Math.floor(Math.random() * S.deck.length)] });
+  }
+  function physics(dt) {
+    const g = SZ * 2.4;
+    w += (wTarget - w) * Math.min(1, dt * 2.5);
+    theta += w * dt;
+    for (const b of balls) {
+      b.vy += g * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      const d = Math.hypot(b.x, b.y), lim = R - BR;
+      if (d > lim) {
+        const nx = b.x / d, ny = b.y / d;
+        b.x = nx * lim; b.y = ny * lim;
+        const vn = b.vx * nx + b.vy * ny;
+        if (vn > 0) { b.vx -= 1.55 * vn * nx; b.vy -= 1.55 * vn * ny; }
+        const wx = -ny * w * R, wy = nx * w * R; // wall surface velocity
+        const k = .22 + Math.min(.4, Math.abs(w) * .03);
+        b.vx += (wx - b.vx) * k; b.vy += (wy - b.vy) * k;
+        if (Math.abs(w) > 3 && Math.random() < .06) { b.vx += (Math.random() - .5) * SZ * 1.5; b.vy -= Math.random() * SZ * 1.2; }
+      }
+    }
+    for (let i = 0; i < balls.length; i++) for (let j = i + 1; j < balls.length; j++) {
+      const a = balls[i], c = balls[j];
+      const dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy), m = BR * 2;
+      if (d > 0 && d < m) {
+        const nx = dx / d, ny = dy / d, o = (m - d) / 2;
+        a.x -= nx * o; a.y -= ny * o; c.x += nx * o; c.y += ny * o;
+        const rv = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
+        if (rv < 0) { const imp = -rv * .9; a.vx -= imp * nx; a.vy -= imp * ny; c.vx += imp * nx; c.vy += imp * ny; }
+      }
+    }
+  }
+  function drawCage() {
+    const c = SZ / 2, cy = SZ * .47;
+    cx.clearRect(0, 0, SZ, SZ);
+    // stand
+    cx.fillStyle = "#3a2410";
+    cx.beginPath(); cx.moveTo(c - R * .55, SZ * .97); cx.lineTo(c, cy); cx.lineTo(c + R * .55, SZ * .97); cx.lineWidth = SZ * .03; cx.strokeStyle = "#8a5c14"; cx.stroke();
+    cx.fillStyle = "#b9861a"; cx.fillRect(c - R * .75, SZ * .95, R * 1.5, SZ * .03);
+    // glass back
+    const gl = cx.createRadialGradient(c - R * .3, cy - R * .3, R * .1, c, cy, R * 1.05);
+    gl.addColorStop(0, "rgba(255,255,255,.10)"); gl.addColorStop(1, "rgba(0,0,0,.35)");
+    cx.fillStyle = gl; cx.beginPath(); cx.arc(c, cy, R, 0, Math.PI * 2); cx.fill();
+    // balls
+    for (const b of balls) {
+      const x = c + b.x, y = cy + b.y, col = HEX[colOf(b.n)];
+      const gr = cx.createRadialGradient(x - BR * .35, y - BR * .4, BR * .1, x, y, BR);
+      gr.addColorStop(0, "#ffffff"); gr.addColorStop(.35, col); gr.addColorStop(1, "#1a1020");
+      cx.fillStyle = gr; cx.beginPath(); cx.arc(x, y, BR, 0, Math.PI * 2); cx.fill();
+    }
+    // rotating wire cage
+    cx.save(); cx.translate(c, cy); cx.rotate(theta);
+    cx.strokeStyle = "rgba(244,196,69,.85)"; cx.lineWidth = Math.max(1.5, SZ * .006);
+    for (let k = 0; k < 6; k++) {
+      cx.save(); cx.rotate(k * Math.PI / 6);
+      cx.beginPath(); cx.ellipse(0, 0, R, R * Math.abs(Math.cos(theta * .7 + k)) * .9 + R * .05, 0, 0, Math.PI * 2); cx.stroke();
+      cx.restore();
+    }
+    cx.restore();
+    // rim
+    cx.lineWidth = SZ * .028; cx.strokeStyle = "#f4c445"; cx.shadowColor = "rgba(244,196,69,.8)"; cx.shadowBlur = Math.abs(w) > 2 ? 24 : 10;
+    cx.beginPath(); cx.arc(c, cy, R, 0, Math.PI * 2); cx.stroke(); cx.shadowBlur = 0;
+    // hub
+    cx.fillStyle = "#b9861a"; cx.beginPath(); cx.arc(c, cy, SZ * .03, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = "#fff3c4"; cx.beginPath(); cx.arc(c - SZ * .008, cy - SZ * .008, SZ * .01, 0, Math.PI * 2); cx.fill();
+    // glare
+    cx.strokeStyle = "rgba(255,255,255,.25)"; cx.lineWidth = SZ * .015; cx.beginPath(); cx.arc(c, cy, R * .86, Math.PI * 1.1, Math.PI * 1.45); cx.stroke();
+  }
+
+  /* ---------- Confetti / coins ---------- */
+  const fx = $("fx"), fc = fx.getContext("2d");
+  let parts = [], fxRunning = false;
+  function sizeFx() { const d = Math.min(window.devicePixelRatio || 1, 2); fx.width = innerWidth * d; fx.height = innerHeight * d; fc.setTransform(d, 0, 0, d, 0, 0); }
+  function burst(x, y, col) {
+    if (reduced) return;
+    const palette = ["#f4c445", "#fff3c4", "#d01836", col, "#ffffff", "#f4c445"];
+    for (let k = 0; k < 170; k++) {
+      const a = Math.random() * Math.PI * 2, s = 250 + Math.random() * 750;
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 350, r: Math.random() * Math.PI, vr: (Math.random() - .5) * 18,
+        coin: Math.random() < .4, c: palette[k % palette.length], size: 5 + Math.random() * 8, life: 2.2 + Math.random() * 1.2 });
+    }
+    if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxLoop); }
+  }
+  let fxLast = 0;
+  function fxLoop(t) {
+    const dt = Math.min(.033, (t - (fxLast || t)) / 1000); fxLast = t;
+    fc.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(p => (p.life -= dt) > 0 && p.y < innerHeight + 40);
+    for (const p of parts) {
+      p.vy += 900 * dt; p.vx *= .985; p.vy *= .985; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+      fc.save(); fc.translate(p.x, p.y); fc.globalAlpha = Math.min(1, p.life);
+      if (p.coin) {
+        fc.scale(Math.abs(Math.cos(p.r)) + .1, 1);
+        fc.fillStyle = "#f4c445"; fc.beginPath(); fc.arc(0, 0, p.size, 0, Math.PI * 2); fc.fill();
+        fc.strokeStyle = "#b9861a"; fc.lineWidth = 2; fc.stroke();
+      } else { fc.rotate(p.r); fc.fillStyle = p.c; fc.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); }
+      fc.restore();
+    }
+    if (parts.length) requestAnimationFrame(fxLoop); else { fxRunning = false; fxLast = 0; fc.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+
+  /* ---------- Board ---------- */
+  const board = $("board"), cells = {};
+  LETTERS.forEach((L, c) => {
+    const rl = document.createElement("div"); rl.className = "rl"; rl.textContent = L; rl.style.color = HEX[c]; board.appendChild(rl);
+    for (let k = 1; k <= 15; k++) { const n = c * 15 + k; const d = document.createElement("div"); d.className = "bn"; d.textContent = n; d.style.setProperty("--c", HEX[c]); board.appendChild(d); cells[n] = d; }
+  });
+
+  /* ---------- Render ---------- */
+  function setBall(n) {
+    const ball = $("ball");
+    if (!n) { ball.classList.add("idle"); ball.style.setProperty("--c", "#5b5560"); $("ballL").innerHTML = "&nbsp;"; $("ballN").textContent = "?"; return; }
+    ball.classList.remove("idle"); ball.style.setProperty("--c", HEX[colOf(n)]);
+    $("ballL").textContent = LETTERS[colOf(n)]; $("ballN").textContent = n;
+  }
+  const KEY = "bingo-caller-v1";
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function load() { try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.deck) && Array.isArray(d.called)) { const all = new Set([...d.deck, ...d.called]); if (all.size === 75 && d.deck.length + d.called.length === 75 && [...all].every(n => Number.isInteger(n) && n >= 1 && n <= 75)) return d; } } catch (e) {} return null; }
+  function render() {
+    save();
+    const last = S.called[S.called.length - 1];
+    setBall(last);
+    $("left").innerHTML = "เหลือในโถ <b>" + S.deck.length + "</b> ลูก";
+    $("count").textContent = "เรียกไปแล้ว " + S.called.length + " / 75 ลูก";
+    const prev = S.called.slice(0, -1).slice(-10).reverse();
+    $("recent").innerHTML = prev.length ? prev.map(n => '<div class="mini" style="--c:' + HEX[colOf(n)] + '" title="' + LETTERS[colOf(n)] + " " + n + '"><div><small>' + LETTERS[colOf(n)] + "</small>" + n + "</div></div>").join("") : '<span class="empty-note">ยังไม่มี</span>';
+    const l5 = S.called.slice(0, -1).slice(-5).reverse();
+    const firstKey = l5.length ? String(l5[0]) + ":" + S.called.length : "";
+    const isNew = firstKey && $("last5").dataset.k !== firstKey && $("last5").dataset.k !== undefined;
+    $("last5").dataset.k = firstKey;
+    $("last5").innerHTML = l5.map((n, i) => '<div class="lb' + (i === 0 && isNew ? " in" : "") + '" style="--c:' + HEX[colOf(n)] + '" title="' + LETTERS[colOf(n)] + " " + n + '"><div class="f"><small>' + LETTERS[colOf(n)] + "</small><b>" + n + "</b></div></div>").join("")
+      + '<div class="lb-empty"></div>'.repeat(5 - l5.length);
+    for (let n = 1; n <= 75; n++) { cells[n].classList.toggle("on", S.called.includes(n)); cells[n].classList.toggle("last", n === last); }
+    const done = S.deck.length === 0;
+    $("spinBtn").disabled = busy || done;
+    $("autoBtn").disabled = done;
+    $("newBtn").disabled = busy;
+    if (done && !busy) $("callout").innerHTML = "ครบ 75 ลูกแล้ว!<small>กด “เริ่มเกมใหม่” เพื่อเล่นรอบต่อไป</small>";
+  }
+
+  /* ---------- The draw ---------- */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function spin() {
+    if (busy || !S.deck.length) return;
+    busy = true; render();
+    const stage = $("stage"), ball = $("ball");
+    const D = reduced ? 400 : ($("quick").checked ? 1100 : 3200);
+    stage.classList.add("spinning"); wTarget = 11 * (Math.random() < .5 ? -1 : 1);
+    $("callout").innerHTML = "กำลังหมุน…<small>ลุ้นกันเลย!</small>";
+    const game = S;
+    const n = S.deck.splice(rndInt(S.deck.length), 1)[0];
+    if (S.called.includes(n)) { console.error("duplicate draw blocked", n); busy = false; render(); return; }
+    const pool = S.deck.length ? S.deck : [n];
+    const t0 = performance.now();
+    let gap = 45;
+    while (performance.now() - t0 < D - gap) {
+      setBall(pool[Math.floor(Math.random() * pool.length)]); tick();
+      await sleep(gap);
+      const p = (performance.now() - t0) / D;
+      gap = 45 + Math.pow(p, 3) * 320;
+    }
+    // reveal (ignore if a new game started mid-spin)
+    if (game !== S) { busy = false; render(); return; }
+    S.called.push(n);
+    stage.classList.remove("spinning"); wTarget = .5;
+    const i = balls.findIndex(b => b.n === n); balls.splice(i >= 0 ? i : 0, 1);
+    setBall(n);
+    ball.classList.remove("reveal"); void ball.offsetWidth; ball.classList.add("reveal");
+    const ring = $("ring"); ring.classList.remove("go"); void ring.offsetWidth; ring.classList.add("go");
+    stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
+    const r = ball.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const fl = $("flash"); fl.style.setProperty("--fx", x + "px"); fl.style.setProperty("--fy", y + "px");
+    fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go");
+    burst(x, y, HEX[colOf(n)]);
+    fanfare();
+    $("callout").innerHTML = LETTERS[colOf(n)] + " " + n + "!<small>" + LETTERS_TH[colOf(n)] + " " + n + " · ลูกที่ " + S.called.length + "</small>";
+    setTimeout(() => speak(n), 350);
+    busy = false; render();
+    syncCage();
+    if (autoOn) {
+      if (S.deck.length) autoTimer = setTimeout(spin, +$("pause").value + 600);
+      else stopAuto();
+    }
+  }
+
+  function startAuto() { autoOn = true; $("autoBtn").setAttribute("aria-pressed", "true"); $("autoBtn").textContent = "หยุดหมุนอัตโนมัติ"; if (!busy) spin(); }
+  function stopAuto() { autoOn = false; clearTimeout(autoTimer); $("autoBtn").setAttribute("aria-pressed", "false"); $("autoBtn").textContent = "หมุนอัตโนมัติ"; }
+
+  let confirmTimer = null;
+  function newGame() {
+    if (busy) return;
+    const btn = $("newBtn");
+    if (S.called.length && !btn.classList.contains("warn")) {
+      btn.classList.add("warn"); btn.textContent = "กดอีกครั้งเพื่อล้างเกม";
+      clearTimeout(confirmTimer); confirmTimer = setTimeout(() => { btn.classList.remove("warn"); btn.textContent = "เริ่มเกมใหม่"; }, 3000);
+      return;
+    }
+    clearTimeout(confirmTimer); btn.classList.remove("warn"); btn.textContent = "เริ่มเกมใหม่";
+    stopAuto();
+    S = freshGame();
+    fillCage(Math.min(36, S.deck.length), S.deck);
+    $("callout").innerHTML = "เกมใหม่!<small>กดปุ่มหมุนเพื่อสุ่มลูกแรก</small>";
+    render();
+  }
+
+  $("spinBtn").addEventListener("click", spin);
+  $("autoBtn").addEventListener("click", () => autoOn ? stopAuto() : startAuto());
+  $("newBtn").addEventListener("click", newGame);
+  $("fsBtn").addEventListener("click", () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else { const p = document.documentElement.requestFullscreen?.(); if (p && p.catch) p.catch(() => {}); }
+    } catch (e) {}
+  });
+  document.addEventListener("fullscreenchange", () => {
+    const fs = !!document.fullscreenElement;
+    document.body.classList.toggle("fs", fs);
+    $("fsBtn").textContent = fs ? "ออกจากเต็มจอ" : "เต็มจอ";
+    if (fs) scrollTo(0, 0);
+    requestAnimationFrame(() => { sizeCage(); sizeFx(); });
+  });
+  $("fsExit").addEventListener("click", () => { try { const p = document.exitFullscreen?.(); if (p && p.catch) p.catch(() => {}); } catch (e) {} });
+  document.addEventListener("keydown", e => {
+    if (e.code !== "Space") return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (["input", "select", "button", "textarea"].includes(tag)) return;
+    e.preventDefault(); spin();
+  });
+  try { navigator.wakeLock?.request("screen").catch(() => {}); } catch (e) {}
+
+  addEventListener("resize", () => { sizeCage(); sizeFx(); });
+
+  let last = 0;
+  function loop(t) {
+    const dt = Math.min(.033, (t - (last || t)) / 1000); last = t;
+    physics(dt / 2); physics(dt / 2); drawCage();
+    requestAnimationFrame(loop);
+  }
+
+  function start() {
+    S = load() || freshGame();
+    sizeCage(); sizeFx(); syncCage(); render();
+    if (S.called.length) $("callout").innerHTML = LETTERS[colOf(S.called.at(-1))] + " " + S.called.at(-1) + "<small>ลูกที่ " + S.called.length + " · เล่นต่อจากเกมเดิม</small>";
+    requestAnimationFrame(loop);
+  }
+  start();
+
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+
+</body>
+</html>
